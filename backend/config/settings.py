@@ -1,11 +1,18 @@
+import environ
 from pathlib import Path
 from datetime import timedelta
 
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-c*rj2r9%cg2(_ssh!73nklf#44=&$hw^4+@#__zamsbw-dg4)e'
+environ.Env.read_env(BASE_DIR / '.env')
 
-DEBUG = True
+SECRET_KEY = env('SECRET_KEY')
+
+DEBUG = env('DEBUG')
 
 ALLOWED_HOSTS = []
 
@@ -49,7 +56,7 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
-FRONTEND_BASE_URL = 'http://localhost:3000' 
+FRONTEND_BASE_URL = 'http://localhost:3000'
 
 APPEND_SLASH = False
 
@@ -125,8 +132,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'hojiakbarnasriddinov2006@gmail.com'
-EMAIL_HOST_PASSWORD = 'prerjvlkfcqrflbb'
+EMAIL_HOST_USER = env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = 'gusto-eats@gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

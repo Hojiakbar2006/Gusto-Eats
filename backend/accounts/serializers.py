@@ -2,42 +2,44 @@ from .models import User
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from rest_framework.exceptions import AuthenticationFailed
-from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.encoding import force_str
-from django.utils.http import urlsafe_base64_decode
 from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 
 class UserSerializer(serializers.ModelSerializer):
-    name = serializers.SerializerMethodField(read_only = True)
-    isAdmin = serializers.SerializerMethodField(read_only = True)
+    name = serializers.SerializerMethodField(read_only=True)
+    isAdmin = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ['id', 'email', 'name','phone_number', 'isAdmin']
+        fields = "__all__"
 
     def get_isAdmin(self, obj):
         return obj.is_staff
 
     def get_name(self, obj):
-        name = obj.first_name
+        name = f"{obj.first_name} {obj.last_name}"
         if name == '':
             name = obj.email
         return name
 
+
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id','first_name', 'last_name', 'email','phone_number']
+        fields = ['id', 'first_name', 'last_name', 'email', 'phone_number']
+
 
 class UserRegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(max_length=68, min_length=6, write_only=True)
-    password2 = serializers.CharField(max_length=68, min_length=6, write_only=True)
-    isAdmin = serializers.SerializerMethodField(read_only = True)
+    password = serializers.CharField(
+        max_length=68, min_length=6, write_only=True)
+    password2 = serializers.CharField(
+        max_length=68, min_length=6, write_only=True)
+    isAdmin = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = User
-        fields = ['email', 'first_name', 'last_name','phone_number', 'password', 'password2', 'isAdmin']
+        fields = ['email', 'first_name', 'last_name',
+                  'phone_number', 'password', 'password2', 'isAdmin']
 
     def get_isAdmin(self, obj):
         return obj.is_staff
@@ -59,20 +61,19 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         )
 
 
-from rest_framework.exceptions import AuthenticationFailed
-from django.contrib.auth import authenticate
-
 class LoginSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(max_length=155, min_length=6)
     password = serializers.CharField(max_length=68, write_only=True)
     full_name = serializers.CharField(max_length=255, read_only=True)
     access_token = serializers.CharField(max_length=255, read_only=True)
     refresh_token = serializers.CharField(max_length=255, read_only=True)
-    is_admin = serializers.BooleanField(read_only=True)  # Yangi qo'shilgan xususiyat
+    is_admin = serializers.BooleanField(
+        read_only=True)  # Yangi qo'shilgan xususiyat
 
     class Meta:
         model = User
-        fields = ['email', 'password', 'full_name', 'access_token', 'refresh_token', 'is_admin']
+        fields = ['email', 'password', 'full_name',
+                  'access_token', 'refresh_token', 'is_admin']
 
     def validate(self, attrs):
         email = attrs.get('email')
@@ -80,7 +81,8 @@ class LoginSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         user = authenticate(request, email=email, password=password)
         if not user:
-            raise AuthenticationFailed("Invalid credentials. Please try again.")
+            raise AuthenticationFailed(
+                "Invalid credentials. Please try again.")
         attrs['is_admin'] = user.is_staff
 
         tokens = user.tokens()
@@ -91,8 +93,6 @@ class LoginSerializer(serializers.ModelSerializer):
             "refresh_token": str(tokens.get('refresh')),
             "is_admin": user.is_staff  # is_admin qiymati
         }
-
-        
 
 
 class LogoutUserSerializer(serializers.Serializer):
@@ -110,4 +110,5 @@ class LogoutUserSerializer(serializers.Serializer):
         try:
             RefreshToken(self.token).blacklist()
         except TokenError:
-            raise AuthenticationFailed('Token is expired or invalid', code='bad_token')
+            raise AuthenticationFailed(
+                'Token is expired or invalid', code='bad_token')

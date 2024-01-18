@@ -3,7 +3,6 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework import status
-from datetime import datetime
 from ..models import Product, Order, OrderItem, ShippingAddress
 from ..serializers import OrderSerializer
 from django.utils import timezone
@@ -12,7 +11,23 @@ from django.utils import timezone
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
-    permission_classes = [IsAdminUser]
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+
+        # Agar foydalanuvchi admin bo'lsa yoki foydalanuvchi ro'yxatdan o'tgan bo'lsa
+        if user.is_staff:
+            # Admin barcha buyurtmalarni ko'rish uchun
+            queryset = Order.objects.all()
+        elif user.is_authenticated:
+            # Foydalanuvchi o'zi ro'yxatdan o'tgan bo'lsa, o'zini va yangi buyurtmalarni ko'rish uchun
+            queryset = Order.objects.filter(user=user)
+        else:
+            # Agar foydalanuvchi tizimga kirishmagan bo'lsa, faqat yangi buyurtmalarni ko'rish uchun
+            queryset = Order.objects.filter(user=None)
+
+        serializer = OrderSerializer(queryset, many=True)
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         user = request.user
@@ -83,14 +98,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
 
             # Foydalanuvchi buyurtmani o'ziga tegishli emas
-        return Response({'detail': 'Not authorized to view this order'}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=True, methods=['get'])
-    def my_orders(self, request, pk=None):
-        user = request.user
-        orders = Order.objects.filter(user=user)
-        serializer = OrderSerializer(orders, many=True)
-        return Response(serializer.data)
+        return Response({'detail': 'No order'}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=True, methods=['patch'], permission_classes=[IsAuthenticated])
     def mark_as_paid(self, request, pk=None):
@@ -98,21 +106,18 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = self.get_object()
 
         # Foydalanuvchi faqat o'ziga tegishli buyurtmalarini to'lashi mumkin
-        if not request.user.is_staff or (request.user.is_staff):
-            return Response({'detail': 'Not authorized to mark'}, status=status.HTTP_400_BAD_REQUEST)
+        if not (request.user.is_staff or (request.user == order.user)):
+            return Response({'detail': 'Not authorized to mark as paid'}, status=status.HTTP_400_BAD_REQUEST)
 
         if order.isPaid:
             return Response({'detail': 'Already paid'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # order.isPaid ning qiymatini oldingi teskari qilib olish
-        # old_is_paid = order.isPaid
-
-        # order.isPaid = not old_is_paid  # Teskari qiymatga o'zgartirish
+        # order.isPaid ni teskari qiymatga o'zgartirish
         order.isPaid = True
         order.paidAt = timezone.now()
         order.save()
 
-        return Response('Order payment status reversed', status=status.HTTP_200_OK)
+        return Response('Order was paid', status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['patch'], permission_classes=[IsAdminUser])
     def mark_as_delivered(self, request, pk=None):

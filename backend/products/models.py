@@ -1,6 +1,7 @@
 from django.db import models
 from accounts.models import User
 
+
 class Category(models.Model):
     name = models.CharField(max_length=50)
     image = models.FileField(upload_to='categories')
@@ -8,24 +9,29 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+
 class Product(models.Model):
     name = models.CharField(max_length=200, null=True, blank=True)
     image = models.FileField(upload_to='product/', blank=False, null=False)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE, max_length=50, null=False, blank=False)
+    category = models.ForeignKey(
+        Category, on_delete=models.CASCADE, max_length=50, null=False, blank=False)
     description = models.TextField(null=True, blank=True)
-    rating = models.DecimalField(max_digits=5, decimal_places=2, blank=True, default=0)
+    rating = models.DecimalField(
+        max_length=1,
+        max_digits=5, decimal_places=0, blank=True, default=0)
     numReviews = models.IntegerField(null=True, blank=True, default=0)
-    price = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True)
     countInStock = models.IntegerField(null=True, blank=True, default=0)
     createdAt = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
-    
+
     @staticmethod
     def get_recommended_products():
         return Product.objects.order_by('-rating')[:9]
-    
+
     def update_rating(self):
         reviews = self.review_set.all()
         total_rating = sum(review.rating for review in reviews)
@@ -38,30 +44,36 @@ class Product(models.Model):
     class Meta:
         ordering = ['id']
 
+
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=200, null=False, blank=False)
-    rating = models.IntegerField(null=True, blank=True, default=0)
+    rating = models.DecimalField(
+        max_digits=5, decimal_places=0, max_length=1, null=True, blank=True, default=0)
     comment = models.TextField(null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return str(self.rating)
-    
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         self.product.update_rating()
 
+
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     paymentMethod = models.CharField(max_length=200, null=True, blank=True)
-    shippingPrice = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
-    totalPrice = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    shippingPrice = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True)
+    totalPrice = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True)
     isPaid = models.BooleanField(default=False)
     paidAt = models.DateTimeField(auto_now_add=False, null=True, blank=True)
     isDelivered = models.BooleanField(default=False)
-    deliveredAt = models.DateTimeField(auto_now_add=False, null=True, blank=True)
+    deliveredAt = models.DateTimeField(
+        auto_now_add=False, null=True, blank=True)
     createdAt = models.DateTimeField(auto_now_add=True)
 
     # def save(self, *args, **kwargs):
@@ -77,12 +89,14 @@ class Order(models.Model):
     def __str__(self):
         return str(self.createdAt)
 
+
 class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=200, null=True, blank=True)
     qty = models.IntegerField(null=True, blank=True, default=0)
-    price = models.DecimalField(max_digits=7, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(
+        max_digits=7, decimal_places=2, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.price and self.product:
@@ -92,8 +106,10 @@ class OrderItem(models.Model):
     def __str__(self):
         return str(self.name)
 
+
 class ShippingAddress(models.Model):
-    order = models.OneToOneField(Order, on_delete=models.CASCADE, null=True, blank=True)
+    order = models.OneToOneField(
+        Order, on_delete=models.CASCADE, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
     city = models.CharField(max_length=200, null=True, blank=True)
     postalCode = models.CharField(max_length=200, null=True, blank=True)

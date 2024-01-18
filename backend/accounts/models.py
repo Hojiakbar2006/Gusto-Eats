@@ -9,12 +9,13 @@ from .managers import UserManager
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    id = models.BigAutoField(primary_key=True, editable=False)
+    id = models.BigAutoField(primary_key=True, unique=True, editable=False)
     email = models.EmailField(
-    max_length=255, verbose_name=_("Email Address"), unique=True)
+        max_length=255, verbose_name=_("Email Address"), unique=True)
     first_name = models.CharField(max_length=100, verbose_name=_("First Name"))
     last_name = models.CharField(max_length=100, verbose_name=_("Last Name"))
-    phone_number = models.CharField(max_length=13, verbose_name=_("Phone Number"))
+    phone_number = models.CharField(
+        max_length=13, verbose_name=_("Phone Number"))
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -26,10 +27,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "email"
 
-    REQUIRED_FIELDS = ['first_name','last_name', 'phone_number']
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'phone_number']
 
     objects = UserManager()
-
 
     def tokens(self):
         refresh = RefreshToken.for_user(self)

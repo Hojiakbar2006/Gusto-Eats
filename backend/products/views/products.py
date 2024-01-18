@@ -1,5 +1,6 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, BasePermission, IsAdminUser, AllowAny
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework import viewsets
 from products.models import Product, Review, Category
@@ -15,7 +16,8 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [IsAdminOrReadOnly]
 
-    def list(self, request):
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
         query = request.query_params.get('keyword')
         if query == None:
             query = ''
@@ -36,24 +38,33 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         page = int(page)
 
-        serializer = ProductSerializer(products, many=True)
+        serializer = self.get_serializer(queryset, many=True)
         return Response({'products': serializer.data, 'page': page, 'pages': paginator.num_pages})
 
     @action(
         detail=True, methods=['post'],
-        permission_classes=[IsAdminUser]
+        permission_classes=[IsAuthenticated]
     )
     def create_review(self, request, pk=None):
-        product = self.get_object()
         user = request.user
+        product = get_object_or_404(Product, pk=pk)
+
+        # Tekshirish uchun foydalanuvchi tomonidan ushbu mahsulotga avval tayyorlanmi review borligini tekshiring
+        existing_review = Review.objects.filter(
+            product=product, user=user).first()
+        if existing_review:
+            return Response({'detail': 'You have already reviewed this product'}, status=status.HTTP_400_BAD_REQUEST)
+
         data = {'product': product.id, 'user': user.id, **request.data}
         serializer = ReviewSerializer(data=data)
+
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data, status=201)
-        return Response(serializer.errors, status=400)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-    @action(detail=False, methods=['get'])
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def recommended(self, request):
         recommended_products = Product.get_recommended_products()
         serializer = ProductSerializer(recommended_products, many=True)
@@ -70,21 +81,4 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminUser]  # Bu orqali faqat adminlarga mumkin
-
-    def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
-            return [AllowAny()]  # Faqat ko'rib chiqish uchun ruxsat
-        return super().get_permissions()
-
-    @action(detail=True, methods=['GET'], permission_classes=[IsAdminUser])
-    def get_category_details(self, request, pk=None):
-        category = self.get_object()
-        serializer = self.get_serializer(category)
-        return Response(serializer.data)
-
-    @action(detail=False, methods=['get'])
-    def recommended(self, request):
-        recommended_products = Product.get_recommended_products()
-        serializer = ProductSerializer(recommended_products, many=True)
-        return Response(serializer.data)
+    permission_classes = [IsAdminOrReadOnly]

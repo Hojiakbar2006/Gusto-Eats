@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from accounts.serializers import UserSerializer
+from accounts.serializers import UserProfileSerializer
 from .models import *
 
 
@@ -8,17 +8,20 @@ class CategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = '__all__'
 
+
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
 
+
 class ProductSerializer(serializers.ModelSerializer):
     reviews = serializers.SerializerMethodField(read_only=True)
+    image = serializers.ImageField(use_url=True)
 
     class Meta:
         model = Product
-        fields = fields = ('id', 'name', 'description', 'price', 'category', 'image', 'countInStock', 'reviews')
+        fields = fields = "__all__"
 
     def get_reviews(self, obj):
         reviews = obj.review_set.all()
@@ -28,17 +31,20 @@ class ProductSerializer(serializers.ModelSerializer):
         obj.save()
         return serializer.data
 
+
 class ShippingAddressSerializer(serializers.ModelSerializer):
     class Meta:
         model = ShippingAddress
         fields = '__all__'
-        
+
+
 class OrderItemSerializer(serializers.ModelSerializer):
     product = ProductSerializer()  # ProductSerializer ni chaqirish
 
     class Meta:
         model = OrderItem
         fields = '__all__'
+
 
 class OrderSerializer(serializers.ModelSerializer):
     orderItems = serializers.SerializerMethodField(read_only=True)
@@ -53,17 +59,17 @@ class OrderSerializer(serializers.ModelSerializer):
         items = obj.orderitem_set.all()
         serializer = OrderItemSerializer(items, many=True)
         return serializer.data
-    
 
     def get_shippingAddress(self, obj):
         try:
-            address = ShippingAddressSerializer(obj.shippingaddress, many=False).data
+            address = ShippingAddressSerializer(
+                obj.shippingaddress, many=False).data
         except:
             address = False
 
         return address
-    
+
     def get_user(self, obj):
         user = obj.user
-        serializer = UserSerializer(user, many=False)
+        serializer = UserProfileSerializer(user, many=False)
         return serializer.data

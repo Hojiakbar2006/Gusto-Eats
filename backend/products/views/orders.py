@@ -15,15 +15,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         user = request.user
 
-        # Agar foydalanuvchi admin bo'lsa yoki foydalanuvchi ro'yxatdan o'tgan bo'lsa
         if user.is_staff:
-            # Admin barcha buyurtmalarni ko'rish uchun
             queryset = Order.objects.all()
         elif user.is_authenticated:
-            # Foydalanuvchi o'zi ro'yxatdan o'tgan bo'lsa, o'zini va yangi buyurtmalarni ko'rish uchun
             queryset = Order.objects.filter(user=user)
         else:
-            # Agar foydalanuvchi tizimga kirishmagan bo'lsa, faqat yangi buyurtmalarni ko'rish uchun
             queryset = Order.objects.filter(user=None)
 
         serializer = OrderSerializer(queryset, many=True)
@@ -53,12 +49,11 @@ class OrderViewSet(viewsets.ModelViewSet):
             city=data['shippingAddress']['city'],
             postalCode=data['shippingAddress']['postalCode'],
         )
-        total_order_price = order.shippingPrice
+        # total_order_price = order.shippingPrice
         for item_data in order_items:
             product_id = item_data.get('product')
             qty = item_data.get('qty')
 
-            # Check if product_id and qty are provided
             if not product_id or not qty:
                 return Response({'error': 'Invalid order item data'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -67,7 +62,6 @@ class OrderViewSet(viewsets.ModelViewSet):
             except Product.DoesNotExist:
                 return Response({'error': f'Product does not exist'}, status=status.HTTP_404_NOT_FOUND)
 
-            # Check if product has enough stock
             if product.countInStock is None or product.countInStock < qty:
                 return Response({'detail': f'Insufficient stock for product {product_id}'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -77,13 +71,13 @@ class OrderViewSet(viewsets.ModelViewSet):
                 name=product.name,
                 qty=qty,
             )
-            total_order_price += int(order_item.price)
+            # total_order_price += int(order_item.price)
 
             product.countInStock -= qty
             product.save()
 
-            order.totalPrice = total_order_price
-            order.save()
+            # order.totalPrice = total_order_price
+            # order.save()
 
         serializer = OrderSerializer(order, many=False)
         return Response(serializer.data, status=status.HTTP_201_CREATED)

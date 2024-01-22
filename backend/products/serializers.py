@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from accounts.serializers import UserProfileSerializer
+from accounts.serializers import UserSerializer
 from .models import *
 
 
@@ -17,7 +17,6 @@ class ReviewSerializer(serializers.ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     reviews = serializers.SerializerMethodField(read_only=True)
-    image = serializers.ImageField(use_url=True)
 
     class Meta:
         model = Product
@@ -71,5 +70,5 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_user(self, obj):
         user = obj.user
-        serializer = UserProfileSerializer(user, many=False)
+        serializer = UserSerializer(user, many=False)
         return serializer.data

@@ -12,7 +12,8 @@ class Category(models.Model):
 
 class Product(models.Model):
     name = models.CharField(max_length=200, null=True, blank=True)
-    image = models.FileField(upload_to='product/', blank=False, null=False)
+    image = models.FileField(upload_to='product/',
+                             max_length=500, blank=False, null=False)
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE, max_length=50, null=False, blank=False)
     description = models.TextField(null=True, blank=True)
@@ -20,8 +21,8 @@ class Product(models.Model):
         max_length=1,
         max_digits=5, decimal_places=0, blank=True, default=0)
     numReviews = models.IntegerField(null=True, blank=True, default=0)
-    price = models.DecimalField(
-        max_digits=7, decimal_places=2, null=True, blank=True)
+    price = models.IntegerField(null=True, blank=True, default=0)
+    discount = models.IntegerField(default=0,)
     countInStock = models.IntegerField(null=True, blank=True, default=0)
     createdAt = models.DateTimeField(auto_now_add=True)
 
@@ -40,6 +41,13 @@ class Product(models.Model):
             average_rating = total_rating / num_reviews
             self.rating = average_rating
             self.save()
+
+    def update_price(self):
+        discountPrice = self.price-(self.price/100*self.discount)
+        if self.discount < 0:
+            return self.price
+        self.price = discountPrice
+        self.save()
 
     class Meta:
         ordering = ['id']

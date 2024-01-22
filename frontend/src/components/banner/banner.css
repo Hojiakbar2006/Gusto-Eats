@@ -29,31 +29,3 @@
 .banner > div > p {
   font-size: 24px;
 }
-
-.category {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  position: sticky;
-  top: 0;
-  background: #fff;
-}
-
-.category > div {
-  display: flex;
-  overflow: auto;
-  gap: 30px;
-}
-
-.category > div::-webkit-scrollbar {
-  display: none;
-}
-
-.category > div > button {
-  min-width: 180px;
-  display: flex;
-  height: 40px;
-  border-radius: 5px;
-  text-transform: capitalize;
-}

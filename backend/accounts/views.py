@@ -59,8 +59,7 @@ def register_user(request):
         user_data = serializer.data
         return Response({
             'data': user_data,
-            'message': 'You have successfully registered',
-            'status': status.HTTP_201_CREATED
+            'message': "Muvafaqiyalit ro'yxatdan o'tdingiz",
         }, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -79,22 +78,21 @@ def send_otp(request):
     email = request.data.get('email')
 
     if not email:
-        return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Email to'ldirilmagan"}, status=status.HTTP_400_BAD_REQUEST)
 
     user = get_object_or_404(get_user_model(), email=email)
     otp_code = user.generate_otp()
     user.save()
 
     send_mail(
-        "Password reset",
-        f"Your OTP code for password reset is: {
-            otp_code}\n\nKeep this code confidential and do not share it with anyone.",
+        "Parol yangilash",
+        f"Parolingizni yangilash uchun otp code: {otp_code}",
         settings.DEFAULT_FROM_EMAIL,
         [email],
         fail_silently=False,
     )
 
-    return Response({"message": "The OTP code has been sent to the email."}, status=status.HTTP_200_OK)
+    return Response({"message": "emailingizga otp code jo'natildi"}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -106,29 +104,29 @@ def reset_password(request):
     new_password2 = request.data.get('new_password2')
 
     if not email:
-        return Response({"detail": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Email to'dirilmagan"}, status=status.HTTP_400_BAD_REQUEST)
 
     if not otp_code:
-        return Response({"detail": "OTP code not fount"}, status=status.HTTP_404_NOT_FOUND)
+        return Response({"detail": "OTP code topilmadi"}, status=status.HTTP_404_NOT_FOUND)
 
     if not new_password:
-        return Response({"detail": "New password is required"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Yangi parol to'dirilmagan"}, status=status.HTTP_400_BAD_REQUEST)
 
     if not new_password2:
-        return Response({"detail": "New password is required"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Yangi parol to'dirilmagan"}, status=status.HTTP_400_BAD_REQUEST)
 
     if new_password != new_password2:
-        return Response({"detail": "Passwords do not match"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Parollar mos emas"}, status=status.HTTP_400_BAD_REQUEST)
 
     user = get_object_or_404(get_user_model(), email=email)
 
     if not user.verify_otp(otp_code):
-        return Response({"detail": "Invalid OTP code"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": "Yaroqsiz otp code"}, status=status.HTTP_400_BAD_REQUEST)
 
     user.set_password(new_password)
     user.save()
 
-    return Response({"message": "Password changed successfully"}, status=status.HTTP_200_OK)
+    return Response({"message": "Parol muvafaqiyatli yangilandi"}, status=status.HTTP_200_OK)
 
 
 @api_view(['POST'])
@@ -138,4 +136,4 @@ def logout_user(request):
     serializer.is_valid(raise_exception=True)
     serializer.save()
 
-    return Response({"message": "successfully logged out"}, status=status.HTTP_204_NO_CONTENT)
+    return Response({"message": "Muvafaqiyatli chiqish"}, status=status.HTTP_204_NO_CONTENT)

@@ -1,19 +1,11 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { Home, Menu } from "./pages";
-import { Footer, Navbar } from "./components";
+import Client from "./routes/client";
+import Admin from "./routes/admin";
 
 const App = () => {
-  return (
-    <Router>
-      <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/menu" element={<Menu />} />
-      </Routes>
-      <Footer />
-    </Router>
-  );
+  const isAdmin = false;
+
+  return <>{isAdmin ? <Admin /> : <Client />}</>;
 };
 
 export default App;

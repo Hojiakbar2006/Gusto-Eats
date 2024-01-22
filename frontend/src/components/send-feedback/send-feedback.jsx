@@ -2,17 +2,17 @@ import React from "react";
 import "./send-feedback.css";
 import LoadingButton from "@mui/lab/LoadingButton";
 // import SendIcon from "@mui/icons-material/Send";
-import { Button, Grid, TextField, Box } from "@mui/material";
+import { Grid, TextField, Box } from "@mui/material";
 
 export default function SendFeedBack() {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get("email"),
-      password: data.get("password"),
-    });
-  };
+  // const handleSubmit = (event) => {
+  //   event.preventDefault();
+  //   const data = new FormData(event.currentTarget);
+  //   console.log({
+  //     email: data.get("email"),
+  //     password: data.get("password"),
+  //   });
+  // };
 
   return (
     <div className="container">

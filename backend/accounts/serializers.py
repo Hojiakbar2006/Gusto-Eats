@@ -82,7 +82,7 @@ class LoginSerializer(serializers.ModelSerializer):
         user = authenticate(request, email=email, password=password)
         if not user:
             raise AuthenticationFailed(
-                "Invalid credentials. Please try again.")
+                "Ma'lumotlar mos kelmadi")
         attrs['is_admin'] = user.is_staff
 
         tokens = user.tokens()
@@ -91,7 +91,7 @@ class LoginSerializer(serializers.ModelSerializer):
             'full_name': user.get_full_name,
             "access_token": str(tokens.get('access')),
             "refresh_token": str(tokens.get('refresh')),
-            "is_admin": user.is_staff  # is_admin qiymati
+            "is_admin": user.is_staff
         }
 
 

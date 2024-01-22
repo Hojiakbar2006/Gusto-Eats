@@ -2,6 +2,7 @@ import React from "react";
 import "./footer.css";
 import { Link } from "react-router-dom";
 import { ru, us, uz } from "../../utils/helper";
+import logo from "../../assets/icons/logo.png";
 
 import {
   Facebook,
@@ -30,7 +31,7 @@ export default function Footer() {
       <div className="left">
         <div>
           <Link to="/">
-            <img width="150px" src="./brand-logo.svg" alt="" />
+            <img width="150px" src={logo} alt="" />
           </Link>
           <p>
             Our job is to filling your tummy with delicious food and with fast

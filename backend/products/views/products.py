@@ -16,13 +16,12 @@ class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = [IsAdminOrReadOnly]
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request,):
         queryset = self.filter_queryset(self.get_queryset())
         query = request.query_params.get('keyword')
         if query == None:
             query = ''
         products = Product.objects.filter(name__icontains=query)
-
         page = request.query_params.get('page')
         paginator = Paginator(products, 30)
 
@@ -49,7 +48,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         user = request.user
         product = get_object_or_404(Product, pk=pk)
 
-        # Tekshirish uchun foydalanuvchi tomonidan ushbu mahsulotga avval tayyorlanmi review borligini tekshiring
         existing_review = Review.objects.filter(
             product=product, user=user).first()
         if existing_review:
@@ -64,7 +62,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'])
     def recommended(self, request):
         recommended_products = Product.get_recommended_products()
         serializer = ProductSerializer(recommended_products, many=True)
@@ -72,7 +70,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         if self.action == 'create_review':
-            return [AllowAny()]
+            return [IsAuthenticated()]
         elif self.action == 'recommended':
             return [AllowAny()]
         return super().get_permissions()

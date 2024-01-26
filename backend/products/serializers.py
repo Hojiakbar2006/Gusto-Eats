@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from accounts.serializers import UserSerializer
+from accounts.serializers import UserProfileSerializer
 from .models import *
 
 
@@ -70,5 +70,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
     def get_user(self, obj):
         user = obj.user
-        serializer = UserSerializer(user, many=False)
+        serializer = UserProfileSerializer(user, many=False)
         return serializer.data
+
+
+class FeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Feedback
+        fields = '__all__'

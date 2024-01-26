@@ -1,77 +1,93 @@
 import React, { useEffect } from "react";
 import "./cart.css";
 import { useSelector, useDispatch } from "react-redux";
-import { DeleteForeverOutlined } from "@mui/icons-material";
-import { Box, Grid, IconButton, TextField } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import { Remove } from "@mui/icons-material";
-import {
-  addQty,
-  getCartItems,
-  removeFromCart,
-  removeQty,
-} from "../../redux/slice/cartSlice";
-import { red } from "@mui/material/colors";
-import { LoadingButton } from "@mui/lab";
-import { Link, useNavigate } from "react-router-dom";
-import { useFormik } from "formik";
-import { useCreateOrderMutation } from "../../redux/services/orderApi";
 import { useSnackbar } from "notistack";
+import { useFormik } from "formik";
 import * as Yup from "yup";
+import { Box, IconButton, TextField } from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import { Remove, DeleteForeverOutlined } from "@mui/icons-material";
+import { LoadingButton } from "@mui/lab";
+import {
+  getCartItems,
+  addQty,
+  removeQty,
+  removeFromCart,
+} from "../../redux/slice/cartSlice";
+import { useCreateOrderMutation } from "../../redux/services/orderApi";
+import { red } from "@mui/material/colors";
+import { useNavigate } from "react-router-dom";
 
-export default function Cart() {
+const Cart = () => {
   const dispatch = useDispatch();
   const cart = useSelector((state) => state.cart);
+  const { enqueueSnackbar } = useSnackbar();
+  const [sendOrder, { isLoading }] = useCreateOrderMutation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(getCartItems());
   }, [dispatch]);
 
-  const [login, { isLoading }] = useCreateOrderMutation();
-  const { enqueueSnackbar } = useSnackbar();
-  const navigate = useNavigate();
-
   const LoginSchema = Yup.object().shape({
-    email: Yup.string().email("Invalid email").required("Required"),
-    password: Yup.string()
+    name: Yup.string().required("Required"),
+    address: Yup.string().required("Required"),
+    phone_number: Yup.string()
       .required("Required")
-      .min(6, "Password should be at least 6 characters"),
+      .min(9, "Phone number should be at least 9 characters"),
   });
 
   const formik = useFormik({
     initialValues: {
-      email: "",
-      password: "",
+      name: "",
+      phone_number: "",
+      address: "",
     },
     validationSchema: LoginSchema,
     onSubmit: async (values) => {
+      const { name, phone_number, address } = values;
+      if (!localStorage.getItem("access_token")) {
+        navigate("/login/");
+      }
+
       try {
-        const res = await login(values);
+        const res = await sendOrder({
+          name,
+          phone_number,
+          shippingAddress: { address },
+          totalPrice: cart.total,
+          orderItems: cart.cartItems.map(({ id, name, quantity }) => ({
+            product: id,
+            name,
+            qty: quantity,
+          })),
+        });
+
         const { error, data } = res;
+        console.log(res);
+
         if (data) {
-          console.log(data);
-          enqueueSnackbar("Kirish muvafaqiyatli amalga oshirildi", {
+          enqueueSnackbar("Buyurtmangiz jo'natildi", {
             variant: "success",
           });
-          localStorage.setItem("access_token", data.access_token);
-          localStorage.setItem("refresh_token", data.refresh_token);
-
-          navigate("/profile/");
+          localStorage.removeItem("cartItems");
+          localStorage.removeItem("cartState");
         }
+
         if (error) {
           if (error.status === 400) {
-            enqueueSnackbar("Foydalanuvchi ma'lumotlari to'liq emas", {
+            enqueueSnackbar("Ma'lumotlari to'liq emas", {
               variant: "error",
             });
           }
           if (error.status === 401) {
-            enqueueSnackbar("Foydalanuvchi ma'lumotlari topilmadi", {
+            enqueueSnackbar("Ma'lumotlari topilmadi", {
               variant: "error",
             });
           }
         }
       } catch (error) {
-        console.error("Login error:", error);
+        console.error("Order submission error:", error);
       }
     },
   });
@@ -126,29 +142,47 @@ export default function Cart() {
             margin="normal"
             required
             fullWidth
-            id="email"
-            label="Email Address"
-            name="email"
+            id="name"
+            label="Name"
+            name="name"
             autoComplete="off"
             autoFocus
-            value={formik.values.email}
+            value={formik.values.name}
             onChange={formik.handleChange}
-            error={formik.touched.email && Boolean(formik.errors.email)}
-            helperText={formik.touched.email && formik.errors.email}
+            error={formik.touched.name && Boolean(formik.errors.name)}
+            helperText={formik.touched.name && formik.errors.name}
           />
           <TextField
             margin="normal"
             required
             fullWidth
-            name="password"
-            label="Password"
-            type="password"
-            id="password"
+            name="phone_number"
+            label="Phone number"
+            type="number"
+            id="phone_number"
             autoComplete="off"
-            value={formik.values.password}
+            value={formik.values.phone_number}
             onChange={formik.handleChange}
-            error={formik.touched.password && Boolean(formik.errors.password)}
-            helperText={formik.touched.password && formik.errors.password}
+            error={
+              formik.touched.phone_number && Boolean(formik.errors.phone_number)
+            }
+            helperText={
+              formik.touched.phone_number && formik.errors.phone_number
+            }
+          />
+          <TextField
+            margin="normal"
+            required
+            fullWidth
+            name="address"
+            label="Address"
+            type="text"
+            id="address"
+            autoComplete="off"
+            value={formik.values.address}
+            onChange={formik.handleChange}
+            error={formik.touched.address && Boolean(formik.errors.address)}
+            helperText={formik.touched.address && formik.errors.address}
           />
           <LoadingButton
             fullWidth
@@ -164,22 +198,12 @@ export default function Cart() {
             loading={isLoading}
             loadingIndicator="Loading…"
           >
-            Login
+            Place order
           </LoadingButton>
-          <Grid container>
-            <Grid item xs>
-              <Link href="#" variant="body2">
-                Forgot password?
-              </Link>
-            </Grid>
-            <Grid item>
-              <Link to="/register/" variant="body2">
-                {"Don't have an account? Sign Up"}
-              </Link>
-            </Grid>
-          </Grid>
         </Box>
       </div>
     </div>
   );
-}
+};
+
+export default Cart;

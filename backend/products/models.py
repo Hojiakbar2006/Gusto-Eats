@@ -73,10 +73,13 @@ class Review(models.Model):
 class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     paymentMethod = models.CharField(max_length=200, null=True, blank=True)
+    name = models.CharField(max_length=200, null=True, blank=True)
+    phone_number = models.CharField(
+        max_length=13)
     shippingPrice = models.DecimalField(
         max_digits=7, decimal_places=2, null=True, blank=True)
-    totalPrice = models.DecimalField(
-        max_digits=7, decimal_places=2, null=True, blank=True)
+    totalPrice = models.IntegerField(
+        null=True, blank=True)
     isPaid = models.BooleanField(default=False)
     paidAt = models.DateTimeField(auto_now_add=False, null=True, blank=True)
     isDelivered = models.BooleanField(default=False)
@@ -95,7 +98,10 @@ class Order(models.Model):
     #     super().save(*args, **kwargs)
 
     def __str__(self):
-        return str(self.createdAt)
+        return f"{self,  str(self.createdAt)}"
+
+    class Meta:
+        ordering = ['-createdAt']
 
 
 class OrderItem(models.Model):
@@ -103,8 +109,8 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.SET_NULL, null=True)
     name = models.CharField(max_length=200, null=True, blank=True)
     qty = models.IntegerField(null=True, blank=True, default=0)
-    price = models.DecimalField(
-        max_digits=7, decimal_places=2, null=True, blank=True)
+    price = models.IntegerField(
+        null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.price and self.product:
@@ -119,8 +125,13 @@ class ShippingAddress(models.Model):
     order = models.OneToOneField(
         Order, on_delete=models.CASCADE, null=True, blank=True)
     address = models.CharField(max_length=200, null=True, blank=True)
-    city = models.CharField(max_length=200, null=True, blank=True)
-    postalCode = models.CharField(max_length=200, null=True, blank=True)
 
     def __str__(self):
         return str(self.address)
+
+
+class Feedback(models.Model):
+    first_name = models.CharField(max_length=200)
+    last_name = models.CharField(max_length=200)
+    email = models.EmailField(max_length=255)
+    message = models.CharField(max_length=500)

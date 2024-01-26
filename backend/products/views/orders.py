@@ -39,6 +39,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         order = Order.objects.create(
             user=user,
             paymentMethod=data.get('paymentMethod'),
+            name=data.get('name'),
+            phone_number=data.get('phone_number'),
             shippingPrice=data.get('shippingPrice') or 0,
             totalPrice=data.get('totalPrice')
         )
@@ -46,8 +48,6 @@ class OrderViewSet(viewsets.ModelViewSet):
         shipping = ShippingAddress.objects.create(
             order=order,
             address=data['shippingAddress']['address'],
-            city=data['shippingAddress']['city'],
-            postalCode=data['shippingAddress']['postalCode'],
         )
         # total_order_price = order.shippingPrice
         for item_data in order_items:

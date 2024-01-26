@@ -3,27 +3,33 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework import viewsets
-from products.models import Product, Review, Category
+from products.models import Product, Review, Category, Feedback
 from rest_framework.decorators import action
 from rest_framework import status
-from ..permissions import IsAdminOrReadOnly
+from ..filters import ProductFilter
+from rest_framework import viewsets, filters, status
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from products.serializers import ProductSerializer, ReviewSerializer, CategorySerializer
+from products.serializers import ProductSerializer, ReviewSerializer, CategorySerializer, FeedbackSerializer
+from django_filters.rest_framework import DjangoFilterBackend
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [IsAdminOrReadOnly]
 
-    def list(self, request,):
+    def list(self, request):
+        page = request.query_params.get('page', 1)
+        query = request.query_params.get('query', '')
+        category_name = request.query_params.get('category', '')
+
         queryset = self.filter_queryset(self.get_queryset())
-        query = request.query_params.get('keyword')
-        if query == None:
-            query = ''
-        products = Product.objects.filter(name__icontains=query)
-        page = request.query_params.get('page')
-        paginator = Paginator(products, 30)
+
+        if query and query != 'null':
+            queryset = queryset.filter(name__icontains=query)
+        if category_name and category_name != 'null':
+            queryset = queryset.filter(category__name=category_name)
+
+        paginator = Paginator(queryset, 30)
 
         try:
             products = paginator.page(page)
@@ -32,12 +38,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         except EmptyPage:
             products = paginator.page(paginator.num_pages)
 
-        if page == None:
-            page = 1
-
-        page = int(page)
-
-        serializer = self.get_serializer(queryset, many=True)
+        serializer = self.get_serializer(products, many=True)
         return Response({'products': serializer.data, 'page': page, 'pages': paginator.num_pages})
 
     @action(
@@ -79,4 +80,10 @@ class ProductViewSet(viewsets.ModelViewSet):
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAdminOrReadOnly]
+    # permission_classes = [IsAdminOrReadOnly]
+
+
+class FeedbackViewSet(viewsets.ModelViewSet):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+    # permission_classes = [IsAdminOrReadOnly]

@@ -39,11 +39,12 @@ def get_user_profile(request):
     return Response(serializer.data)
 
 
-@api_view(['PUT'])
+@api_view(['PATCH'])
 @permission_classes([IsAuthenticated])
 def update_user_profile(request):
     user = request.user
-    serializer = UserProfileSerializer(user, data=request.data)
+    serializer = UserProfileSerializer(
+        user, data=request.data, partial=True)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)

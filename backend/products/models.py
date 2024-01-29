@@ -16,6 +16,7 @@ class Product(models.Model):
                              max_length=500, blank=False, null=False)
     category = models.ForeignKey(
         Category, on_delete=models.CASCADE, max_length=50, null=False, blank=False)
+    type = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     rating = models.DecimalField(
         max_length=1,

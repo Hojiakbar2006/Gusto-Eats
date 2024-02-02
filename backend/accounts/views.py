@@ -6,8 +6,8 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
-from .serializers import UserRegisterSerializer, LoginSerializer, LogoutUserSerializer, UserProfileSerializer
+from rest_framework.permissions import *
+from .serializers import *
 
 
 @api_view(['GET'])
@@ -24,9 +24,8 @@ def get_users(request):
 @permission_classes([IsAdminUser])
 def get_users_staff(request):
     users = get_user_model().objects.filter(is_staff=True)
-    if not users == request.user:
-        return Response({'message': 'No Staff Users'})
-
+    if not users:
+        return Response({'message': 'No staff users'})
     serializer = UserProfileSerializer(users, many=True)
     return Response(serializer.data)
 
